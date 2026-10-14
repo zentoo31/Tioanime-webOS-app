@@ -1,0 +1,26 @@
+const { DOMParser } = require('linkedom');
+const { TioCatalog } = require('../app/catalog');
+const client = require('../service/client');
+const assert = require('node:assert/strict');
+const load = path => new Promise((resolve, reject) => client.load(path, (e, html) => e ? reject(e) : resolve(TioCatalog.parse(html, path, DOMParser))));
+(async () => {
+  const home = await load('/');
+  assert.ok(home.items.length > 0, 'Home episodes');
+  console.log('Inicio:', home.items.length, 'episodios');
+  const search = await load('/directorio?q=naruto');
+  assert.ok(search.items.length > 0, 'Search results');
+  console.log('Búsqueda:', search.items.length, 'resultados');
+  const directory = await load('/directorio');
+  assert.ok(directory.next, 'Directory pagination');
+  const secondPage = await load(directory.next);
+  assert.ok(secondPage.items.length > 0, 'Second page');
+  assert.notEqual(secondPage.items[0].path, directory.items[0].path);
+  console.log('Directorio: paginación verificada');
+  const detail = await load(search.items[0].path);
+  assert.ok(detail.items.length > 0, 'Episode list');
+  assert.ok(detail.description.length > 50, 'Synopsis');
+  console.log('Ficha:', detail.title, '-', detail.items.length, 'episodios');
+  const episode = await load(home.items[0].path);
+  assert.ok(episode.items.length > 0, 'Video providers');
+  console.log('Servidores:', episode.items.map(x => x.title).join(', '));
+})().catch(e => { console.error(e); process.exitCode = 1; });

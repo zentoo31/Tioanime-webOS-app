@@ -1,0 +1,17 @@
+{
+  "id": "com.tioanime.tv",
+  "version": "0.2.0",
+  "vendor": "zentoo31",
+  "type": "web",
+  "main": "index.html",
+  "title": "TioAnime TV",
+  "icon": "icon.png",
+  "largeIcon": "largeIcon.png",
+  "resolution": "1920x1080",
+  "backgroundColor": "#18142f",
+  "splashBackground": "splash.png",
+  "requiredACG": [],
+  "disableBackHistoryAPI": true
+}
+
+

@@ -1,0 +1,24 @@
+﻿<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TioAnime TV</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+<header><a id="brand-home" class="brand" href="index.html" tabindex="-1" aria-label="TioAnime: volver al inicio"><img src="logo.png" alt="TioAnime" draggable="false"></a><nav aria-label="Navegación principal"><button id="home">Inicio</button><button id="directory">Animes</button><button id="recent">Recientes</button><button id="back">Volver</button></nav></header>
+<main>
+<form id="search"><label for="query">Encuentra tu próximo anime</label><div><input id="query" type="search" placeholder="Buscar anime…" maxlength="100"><button type="submit">Buscar</button></div></form>
+<div id="heading" class="heading"><div><p id="eyebrow" class="eyebrow">DESCUBRE</p><h1 id="title">Últimos episodios</h1><p id="view-description" class="view-description"></p></div></div>
+<p id="status" role="status" aria-live="polite"></p>
+<section id="detail" hidden></section>
+<h2 id="content-label" hidden></h2>
+<section id="history-actions" hidden aria-label="Opciones de recientes">
+<button id="clear-history">Eliminar todos</button>
+<div id="confirm-clear" hidden><p>¿Eliminar todos los animes de Recientes?</p><button id="cancel-clear">Cancelar</button><button id="accept-clear">Sí, eliminar todos</button></div>
+</section>
+<section id="grid" aria-label="Contenido"></section>
+<nav id="pagination" hidden aria-label="Paginación"><button id="previous">Anterior</button><span id="page-label" aria-live="polite">Página 1</span><button id="next">Siguiente</button></nav><button id="retry" hidden>Reintentar</button>
+<section id="player" hidden><div class="player-toolbar"><button id="close-player">Cerrar</button><div class="player-information"><strong id="player-title"></strong><span id="player-status">Usa el puntero si el servidor lo necesita. Botón rojo: cerrar.</span></div></div><iframe id="frame" title="Reproductor externo" allow="autoplay; fullscreen; encrypted-media" allowfullscreen sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"></iframe></section>
+</main>
+<footer><span class="remote-hint">↑ ↓ ← → Navegar <b>OK</b> Seleccionar <b>↶</b> Volver</span><span>Por zentoo31 · TioAnime</span></footer>
+<script src="webOSTVjs/webOSTV.js"></script><script src="catalog.js"></script><script src="history.js"></script><script src="main.js"></script>
+</body></html>
+
+
