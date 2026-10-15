@@ -1,6 +1,6 @@
 {
   "id": "com.tioanime.tv",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "vendor": "zentoo31",
   "type": "web",
   "main": "index.html",
@@ -13,6 +13,8 @@
   "requiredACG": [],
   "disableBackHistoryAPI": true
 }
+
+
 
 
 

@@ -33,11 +33,14 @@ h1 { font-size: 42px; line-height: 1.15; margin: 0; font-weight: 700; }
 #status:empty { margin: 0 0 24px; }
 #content-label { font-size: 27px; margin: 36px 0 20px; font-weight: 600; }
 #grid { display: flex; flex-wrap: wrap; align-items: stretch; margin: -12px; }
-button.card { display: flex; flex-direction: column; width: calc(25% - 24px); margin: 12px; padding: 0; text-align: left; overflow: hidden; border: 1px solid #443655; border-radius: 0; background: #251e3c; }
+button.card { display: block; flex: 0 0 auto; min-width: 0; width: calc(25% - 24px); margin: 12px; padding: 0; text-align: left; overflow: hidden; border: 1px solid #443655; border-radius: 0; background: #251e3c; }
 button.card:focus { position: relative; z-index: 1; background: #3b2e59; border-color: #c5a3ff; -webkit-transform: translateY(-3px); transform: translateY(-3px); }
 button.card.poster { width: calc(20% - 24px); }
-.poster-cover, .thumbnail-cover { display: block; position: relative; width: 100%; padding-top: 150%; background: #1c1732; flex-shrink: 0; }
-.thumbnail-cover { padding-top: 56.25%; }
+/* El espaciador vive en flujo normal, fuera del cálculo porcentual de flex.
+   La altura no depende del tamaño original ni de la carga de la imagen. */
+.poster-cover, .thumbnail-cover { display: block; position: relative; width: 100%; overflow: hidden; background: #1c1732; }
+.poster-cover::before, .thumbnail-cover::before { content: ''; display: block; width: 100%; padding-top: 150%; }
+.thumbnail-cover::before { padding-top: 56.25%; }
 .poster-cover > img, .thumbnail-cover > img { position: absolute; top: 0; left: 0; display: block; width: 100%; height: 100%; object-fit: contain; }
 .thumbnail-cover > img { object-fit: cover; }
 .cover-placeholder > .icon { width: 48px; height: 48px; top: 50%; left: 50%; margin: -24px 0 0 -24px; opacity: .45; object-fit: contain; }
@@ -72,7 +75,7 @@ button.server .title-lines { height: auto; font-size: 26px; }
 #accept-clear { background: #593049; border-color: #97647f; }
 #confirm-clear { width: 100%; border-left: 3px solid #c5a3ff; background: #251e3c; padding: 20px 24px; }
 #confirm-clear p { font-size: 23px; margin: 0 0 16px; }
-.recent-entry { position: relative; display: flex; width: calc(25% - 24px); margin: 12px; }
+.recent-entry { position: relative; display: flex; flex: 0 0 auto; min-width: 0; width: calc(25% - 24px); margin: 12px; }
 .recent-entry button.card { width: 100%; margin: 0; }
 .recent-entry .card-title { padding-right: 66px; }
 .remove-recent { position: absolute; right: 12px; bottom: 17px; padding: 10px; margin: 0; background: #302642; border-color: #75628e; }

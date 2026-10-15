@@ -1,6 +1,6 @@
 ﻿{
   "name": "tioanime-webos",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "private": true,
   "author": "zentoo31",
   "description": "Base de aplicación para LG webOS TV",
@@ -8,6 +8,7 @@
     "check": "node --check app/main.js && node --check app/catalog.js && node --check app/history.js && node --check service/service.js && ares-package --check app service",
     "test": "node --test tests/*.test.cjs",
     "test:live": "node scripts/check-live.cjs",
+    "test:dns": "node scripts/check-dns.cjs",
     "package": "ares-package app service --outdir dist",
     "serve": "node scripts/serve.cjs"
   },
@@ -15,4 +16,6 @@
     "linkedom": "^0.18.13"
   }
 }
+
+
 

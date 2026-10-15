@@ -2,7 +2,7 @@
 
 Autor: **zentoo31**.
 
-Aplicación independiente, sin afiliación a TioAnime. Versión 0.2.1.
+Aplicación independiente, sin afiliación a TioAnime. Versión 0.2.3.
 
 ## Funciones
 
@@ -50,7 +50,7 @@ Activa Developer Mode y conecta ambos equipos a la misma red. Configura el dispo
 ```powershell
 ares-setup-device
 ares-novacom --device NOMBRE_TV --getkey
-ares-install --device NOMBRE_TV dist/com.tioanime.tv_0.2.1_all.ipk
+ares-install --device NOMBRE_TV dist/com.tioanime.tv_0.2.3_all.ipk
 ares-launch --device NOMBRE_TV com.tioanime.tv
 ```
 
@@ -89,3 +89,20 @@ Desde la versión 0.2.1 todos los servidores se abren sin el atributo sandbox, c
 
 El menú marca la sección activa con un subrayado, separado del contorno de foco del mando. Las tarjetas limitan títulos a dos líneas y separan el número de episodio. La ficha agrupa portada, título, metadatos y sinopsis e incluye Continuar cuando el historial contiene un episodio disponible de ese anime; este botón vuelve a la selección de servidor, sin reanudar minutos de video. La paginación muestra el número de página y desactiva los extremos sin destino. Recientes ofrece un botón compacto de eliminación por anime con nombre accesible. Los servidores muestran la identidad del episodio y opciones numeradas. Se mantiene el fondo #18142f y las animaciones ligeras, con soporte para movimiento reducido.
 
+
+
+## Miniaturas en TV (0.2.2)
+
+Las tarjetas usan ancho de columna explícito y min-width: 0. La proporción 16:9 de Inicio y Recientes y 2:3 del directorio se reserva con un espaciador en flujo normal, en lugar de padding porcentual sobre un hijo flex. Así la geometría no depende del tamaño original ni de la carga de cada imagen. Pendiente de confirmar el resultado visual en el dispositivo reportado.
+
+
+
+## DNS de Cloudflare integrado (0.2.3)
+
+El cliente del catálogo resuelve tioanime.com usando DNS sobre HTTPS de Cloudflare, sin usar el DNS del sistema ni cambiar ajustes de la TV o del router. Para llegar al resolvedor usa directamente 1.1.1.1 y, si falla, 1.0.0.1, conservando el hostname cloudflare-dns.com para TLS. Luego conecta a TioAnime mediante la dirección obtenida, conservando tioanime.com en Host/SNI y la validación normal del certificado. No se deshabilita TLS. Las respuestas IPv4 se cachean según TTL con un máximo de cinco minutos y las consultas simultáneas se agrupan. Si ambos resolvedores fallan, se informa del error sin recurrir al DNS del sistema.
+
+Aplica a inicio, directorio, búsquedas, fichas y listas de servidores consultadas por service/client.js. Las imágenes cargadas directamente por la interfaz y los reproductores externos siguen usando la red y el DNS del motor web de la TV. No es un proxy ni una VPN y no resuelve bloqueos por dirección IP o filtrado de conexiones HTTPS.
+
+`npm run test:dns` verifica una consulta real del catálogo con dns.lookup deshabilitado únicamente dentro del proceso de prueba. No cambia el DNS del equipo. La compatibilidad TLS del firmware de la TV debe comprobarse en el dispositivo.
+
+Referencia: https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/make-api-requests/
