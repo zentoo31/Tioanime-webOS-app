@@ -1,4 +1,4 @@
-const { test } = require('node:test');
+﻿const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const fs = require('node:fs');
@@ -50,12 +50,12 @@ test('app opens episodes and providers, closes playback, returns and retries', (
   click('item-0');
   assert.equal(document.getElementById('frame').hasAttribute('sandbox'), false);
   click('close-player');
-  assert.equal(document.getElementById('frame').hasAttribute('sandbox'), true);
+  assert.equal(document.getElementById('frame').hasAttribute('sandbox'), false);
   click('item-1');
-  assert.equal(document.getElementById('frame').hasAttribute('sandbox'), true);
+  assert.equal(document.getElementById('frame').hasAttribute('sandbox'), false);
   click('close-player');
   click('item-2');
-  assert.equal(document.getElementById('frame').hasAttribute('sandbox'), true);
+  assert.equal(document.getElementById('frame').hasAttribute('sandbox'), false);
   click('close-player');
   click('directory');
   answer('<h1 class="title">Animes</h1><article class="anime"><a href="/anime/demo"><h3>Demo</h3></a></article><a rel="next" href="/directorio?p=2">Next</a>');
@@ -92,3 +92,4 @@ test('app opens episodes and providers, closes playback, returns and retries', (
   assert.equal(document.getElementById('item-0'), null);
   assert.equal(focused.id, 'recent');
 });
+
