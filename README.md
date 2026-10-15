@@ -2,7 +2,7 @@
 
 Autor: **zentoo31**.
 
-Aplicación independiente, sin afiliación a TioAnime. Versión 0.2.0.
+Aplicación independiente, sin afiliación a TioAnime. Versión 0.2.1.
 
 ## Funciones
 
@@ -50,7 +50,7 @@ Activa Developer Mode y conecta ambos equipos a la misma red. Configura el dispo
 ```powershell
 ares-setup-device
 ares-novacom --device NOMBRE_TV --getkey
-ares-install --device NOMBRE_TV dist/com.tioanime.tv_0.2.0_all.ipk
+ares-install --device NOMBRE_TV dist/com.tioanime.tv_0.2.1_all.ipk
 ares-launch --device NOMBRE_TV com.tioanime.tv
 ```
 
@@ -62,7 +62,7 @@ Flechas y OK recorren las tarjetas. En la búsqueda, izquierda/derecha editan el
 
 Al elegir servidor se abre su reproductor externo. El botón superior permite cerrarlo. Atrás y el botón rojo también lo cierran **cuando la app conserva el foco**. Si el foco entra en un iframe externo, sus eventos no llegan a la app: puede ser necesario usar el puntero del Magic Remote para pulsar el cierre. No se garantiza manejo completo con un mando sin puntero.
 
-Los proveedores pueden bloquear iframes, exigir interacciones, presentar publicidad o usar formatos no soportados por la TV. El iframe restringe ventanas emergentes y navegación de la aplicación; algunos proveedores pueden no funcionar con esas restricciones. No se eluden bloqueos ni se resuelven desafíos automáticamente.
+Los proveedores pueden bloquear iframes, exigir interacciones, presentar publicidad o usar formatos no soportados por la TV. Los reproductores se abren sin sandbox para evitar los rechazos reportados en la TV; los proveedores pueden intentar abrir ventanas emergentes o redirecciones. No se eluden bloqueos ni se resuelven desafíos automáticamente.
 
 Pendiente de validar en una LG real: arranque del servicio y permisos, TLS del firmware, renderizado, teclado virtual, controles de cada servidor, reproducción y regreso desde el iframe. Aún no se conoce el modelo ni la versión webOS de destino. Un cambio en el HTML de TioAnime puede requerir actualizar el analizador.
 
@@ -77,9 +77,9 @@ Las tarjetas tienen una entrada de 180 ms limitada a las primeras ocho. El foco 
 
 La sección Recientes guarda hasta 50 animes en localStorage del dispositivo, con una sola entrada por anime y el último episodio abierto al elegir un servidor. Se ordena por apertura más reciente y permite regresar a la selección de servidor del episodio. No guarda minutos de reproducción ni confirma que el video haya comenzado: los reproductores externos no exponen ese estado a la app. El historial es local, no se sincroniza con TioAnime y puede perderse al borrar los datos o desinstalar la app. Si falla la escritura, la sesión mantiene el historial en memoria y muestra un aviso.
 
-### Compatibilidad con Netu
+### Compatibilidad de los reproductores
 
-Netu en `https://hqq.tv` se abre sin el atributo sandbox, como en el reproductor de TioAnime. Su código intenta modificar document.domain, operación prohibida en un iframe sandboxed. Esta excepción se limita al servidor etiquetado Netu y al hostname exacto hqq.tv. Cada apertura crea un iframe nuevo y el resto de servidores conserva el sandbox. Netu puede abrir publicidad o intentar redirecciones; el modo no garantiza reproducción ni elimina comprobaciones de origen, cookies o bloqueos del proveedor. Se verificó la configuración con pruebas de DOM; falta comprobar la reproducción en navegador y TV.
+Desde la versión 0.2.1 todos los servidores se abren sin el atributo sandbox, como en TioAnime. La excepción inicial solo para Netu no era suficiente: otros proveedores también rechazan esa restricción en la TV. Cada apertura crea un iframe nuevo. Se mantiene la separación entre orígenes del navegador, pero el proveedor puede abrir publicidad o intentar redirecciones. No se garantiza reproducción si existen otros bloqueos, codecs no soportados o incompatibilidades del firmware. La nueva configuración se comprueba con pruebas de DOM; falta repetir la prueba en la LG.
 
 ## Pantalla de lanzamiento de webOS
 
@@ -88,3 +88,4 @@ Netu en `https://hqq.tv` se abre sin el atributo sandbox, como en el reproductor
 ## Organización de la interfaz
 
 El menú marca la sección activa con un subrayado, separado del contorno de foco del mando. Las tarjetas limitan títulos a dos líneas y separan el número de episodio. La ficha agrupa portada, título, metadatos y sinopsis e incluye Continuar cuando el historial contiene un episodio disponible de ese anime; este botón vuelve a la selección de servidor, sin reanudar minutos de video. La paginación muestra el número de página y desactiva los extremos sin destino. Recientes ofrece un botón compacto de eliminación por anime con nombre accesible. Los servidores muestran la identidad del episodio y opciones numeradas. Se mantiene el fondo #18142f y las animaciones ligeras, con soporte para movimiento reducido.
+
