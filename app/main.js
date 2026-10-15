@@ -7,7 +7,6 @@
   try { storage = window.localStorage; } catch (e) {}
   var recent = TioHistory.create(storage);
   var activeResult = null, knownImages = {};
-  var playerSandbox = $('frame').getAttribute('sandbox');
   function status(text) { $('status').textContent = text; }
   function request(path, callback) {
     var done = false;
@@ -184,18 +183,11 @@
     });
   }
   function play(item) {
-    // Netu modifica document.domain: esa operación falla incluso con
-    // allow-same-origin si el iframe conserva cualquier sandbox.
-    var netuCompatibility = false;
-    try {
-      var providerURL = new URL(item.url);
-      netuCompatibility = /^netu$/i.test(item.title) && providerURL.protocol === 'https:' && providerURL.hostname === 'hqq.tv';
-    } catch (e) {}
-    // Un contexto nuevo evita heredar restricciones del servidor anterior.
+    // Los proveedores rechazan el sandbox; abrir como el iframe de TioAnime.
+    // Un contexto nuevo evita heredar estado del servidor anterior.
     var oldFrame = $('frame'), frame = oldFrame.cloneNode(false);
     frame.src = 'about:blank';
-    if (netuCompatibility) frame.removeAttribute('sandbox');
-    else frame.setAttribute('sandbox', playerSandbox);
+    frame.removeAttribute('sandbox');
     oldFrame.parentNode.replaceChild(frame, oldFrame);
     var persisted = true;
     if (activeResult && activeResult.kind === 'episode') {
@@ -210,13 +202,11 @@
     $('player-title').textContent = activeResult ? activeResult.title : 'Reproductor';
     $('frame').src = item.url;
     $('player-status').textContent = item.title + ' · Si no carga, cierra y elige otro servidor. Botón rojo: cerrar.';
-    if (netuCompatibility) $('player-status').textContent = 'Netu · Modo compatible: puede abrir publicidad. Botón rojo: cerrar.';
     if (!persisted) $('player-status').textContent += ' No se pudo guardar el historial en este dispositivo.';
     $('close-player').focus();
   }
   function closePlayer() {
     $('frame').src = 'about:blank'; $('player').hidden = true;
-    $('frame').setAttribute('sandbox', playerSandbox);
     var button = $(lastFocus); if (button) button.focus();
   }
   function back() {
