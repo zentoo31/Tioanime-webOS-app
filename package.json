@@ -1,6 +1,6 @@
-{
+﻿{
   "name": "tioanime-webos",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "author": "zentoo31",
   "description": "Base de aplicación para LG webOS TV",
@@ -15,3 +15,4 @@
     "linkedom": "^0.18.13"
   }
 }
+
