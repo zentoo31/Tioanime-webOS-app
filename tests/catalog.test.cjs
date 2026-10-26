@@ -3,6 +3,28 @@ const assert = require('node:assert/strict');
 const { DOMParser } = require('linkedom');
 const catalog = require('../app/catalog').TioCatalog;
 const { validPath } = require('../service/client');
+test('chronology keeps site order and excludes duplicates, current anime and unrelated sections', () => {
+  const card = (path, title) => '<article class="anime"><a href="' + path + '"><img src="/uploads/portadas/3.jpg"></a><h3 class="title">' + title + '</h3><span class="year">2007</span></article>';
+  const html = '<section class="w-history">' + card('/anime/sequel', 'Secuela &amp; más') + card('/anime/prequel', 'Precuela') + card('/anime/sequel', 'Duplicado') + card('/anime/demo', 'Actual') + card('https://external.test/anime/other', 'Externo') + card('/ver/demo-1', 'Episodio') + '</section><section class="w-related">' + card('/anime/unrelated', 'Ajeno') + '</section>';
+  const result = catalog.parse(html, '/anime/demo', DOMParser);
+  assert.deepEqual(result.chronology.map(item => item.path), ['/anime/sequel', '/anime/prequel']);
+  assert.equal(result.chronology[0].title, 'Secuela & más');
+  assert.equal(result.chronology[0].year, '2007');
+  assert.equal(result.chronology[0].image, 'https://tioanime.com/uploads/portadas/3.jpg');
+  assert.deepEqual(catalog.parse('<h1>Demo</h1>', '/anime/demo', DOMParser).chronology, []);
+});
+test('next episode comes from the site and never invents a final episode', () => {
+  const nav = '<div class="episodes-nav"><a href="/anime/demo">Listado</a><a href="/ver/demo-12">Episodio siguiente</a></div>';
+  assert.equal(catalog.parse(nav, '/ver/demo-11', DOMParser).nextEpisode, '/ver/demo-12');
+  assert.equal(catalog.parse(nav.replace('/ver/demo-12', '#'), '/ver/demo-11', DOMParser).nextEpisode, '');
+  assert.equal(catalog.parse(nav.replace('/ver/demo-12', '/ver/other-12'), '/ver/demo-11', DOMParser).nextEpisode, '');
+});
+test('previous episode uses only the same anime navigation link', () => {
+  const nav = '<div class="episodes-nav"><a href="/anime/demo">Listado</a><a href="/ver/demo-10">Episodio anterior</a></div>';
+  assert.equal(catalog.parse(nav, '/ver/demo-11', DOMParser).previousEpisode, '/ver/demo-10');
+  assert.equal(catalog.parse(nav.replace('/ver/demo-10', '#'), '/ver/demo-11', DOMParser).previousEpisode, '');
+  assert.equal(catalog.parse(nav.replace('/ver/demo-10', '/ver/other-10'), '/ver/demo-11', DOMParser).previousEpisode, '');
+});
 test('pagination goes both ways, keeps search and hides disabled previous links', () => {
   const html = '<ul class="pagination"><li><a rel="prev" href="/directorio?p=1">«</a></li><li><a rel="next" href="/directorio?p=3">»</a></li></ul>';
   const result = catalog.parse(html, '/directorio?q=one%20piece&p=2', DOMParser);

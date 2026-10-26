@@ -1,19 +1,24 @@
-'use strict';
+﻿'use strict';
 var https = require('https');
 var net = require('net');
+function allowed(hostname) {
+  return /^(?:tioanime\.com|hianime\.at|zokoanime\.video|hls\.dramahot\.top|hls[0-9]+\.drama1\.cfd|cdn\.anipixcdn\.co|cdn\.myanimelist\.net|(?:www\.)?jkanime\.net|cdn\.jkdesa\.com|cdn[0-9]+\.ducvomes\.com|(?:[a-z0-9-]+\.)*playmudos\.com|voe\.sx|megankiddifference\.com|ashleyhardat\.com|(?:[a-z0-9-]+\.)*cloudwindow-route\.com|(?:www\.)?yourupload\.com|(?:[a-z0-9-]+\.)*vidcache\.net|ok\.ru|[a-z0-9-]+\.okcdn\.ru)$/.test(hostname || '');
+}
 
 function create(get, now) {
   get = get || https.get;
   now = now || Date.now;
-  var cached = null, waiting = [];
+  var cache = {}, queues = {};
   function resolve(hostname, callback) {
-    if (hostname !== 'tioanime.com') { callback(new Error('Dominio DNS no permitido')); return; }
+    if (!allowed(hostname)) { callback(new Error('Dominio DNS no permitido')); return; }
+    var cached = cache[hostname];
     if (cached && cached.expires > now()) { callback(null, cached.address); return; }
+    var waiting = queues[hostname] || (queues[hostname] = []);
     waiting.push(callback);
     if (waiting.length > 1) return;
     function finish(error, address, ttl) {
-      if (!error) cached = { address: address, expires: now() + Math.max(0, Math.min(ttl, 300)) * 1000 };
-      var callbacks = waiting; waiting = [];
+      if (!error) cache[hostname] = { address: address, expires: now() + Math.max(0, Math.min(ttl, 300)) * 1000 };
+      var callbacks = waiting; delete queues[hostname];
       callbacks.forEach(function (cb) { cb(error, address); });
     }
     function attempt(index) {
@@ -34,7 +39,7 @@ function create(get, now) {
           family: 4, agent: false,
           // Arranque por IP fija: ni siquiera Cloudflare usa el DNS del sistema.
           lookup: function (host, options, cb) { cb(null, index === 0 ? '1.1.1.1' : '1.0.0.1', 4); },
-          path: '/dns-query?name=tioanime.com&type=A',
+          path: '/dns-query?name=' + encodeURIComponent(hostname) + '&type=A',
           headers: { Accept: 'application/dns-json' }
         }, function (response) {
           if (response.statusCode !== 200) { response.resume(); done(new Error('Cloudflare DNS HTTP ' + response.statusCode)); return; }
@@ -47,7 +52,7 @@ function create(get, now) {
           response.on('end', function () {
             try {
               var answer = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-              if (answer.Status !== 0 || !Array.isArray(answer.Answer)) throw new Error('Cloudflare no pudo resolver TioAnime');
+              if (answer.Status !== 0 || !Array.isArray(answer.Answer)) throw new Error('Cloudflare no pudo resolver ' + hostname);
               var records = answer.Answer.filter(function (record) { return record.type === 1 && net.isIP(record.data) === 4; });
               if (!records.length) throw new Error('Cloudflare no devolvió una dirección IPv4');
               var ttl = records.reduce(function (min, record) { return Math.min(min, Number(record.TTL) || 0); }, 300);
@@ -66,3 +71,6 @@ function create(get, now) {
 }
 exports.create = create;
 exports.resolve = create().resolve;
+exports.allowed = allowed;
+exports.lookup = function (hostname, options, callback) { exports.resolve(hostname, function (error, address) { callback(error, address, 4); }); };
+

@@ -1,4 +1,5 @@
-﻿{"name":"com.tioanime.tv.catalog","version":"0.2.3","main":"service.js"}
-
-
-
+{
+  "name": "com.tioanime.tv.catalog",
+  "version": "0.5.1",
+  "main": "service.js"
+}

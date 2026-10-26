@@ -69,6 +69,21 @@
         if (genre && result.genres.indexOf(genre) === -1) result.genres.push(genre);
       });
       result.image = absolute('/uploads/portadas/' + info[0] + '.jpg', 'image');
+      result.chronology = [];
+      var relatedSeen = {};
+      Array.prototype.forEach.call(doc.querySelectorAll('.w-history article.anime'), function (article) {
+        var link = article.querySelector('a[href]');
+        var target = link && absolute(link.getAttribute('href'), 'page');
+        var name = article.querySelector('h3.title') || article.querySelector('h3');
+        if (!target || target.indexOf('/anime/') !== 0 || target === path || relatedSeen[target] || !name || !name.textContent.trim()) return;
+        relatedSeen[target] = true;
+        var image = article.querySelector('img'), year = article.querySelector('.year');
+        result.chronology.push({
+          path: target, title: name.textContent.trim(),
+          image: image ? absolute(image.getAttribute('src'), 'image') : '',
+          year: year ? year.textContent.trim() : ''
+        });
+      });
       data(html, 'episodes').forEach(function (number) {
         if (typeof number !== 'number' || !/^[a-z0-9-]+$/.test(info[1])) return;
         items.push({ title: 'Episodio ' + number, path: '/ver/' + info[1] + '-' + number });
@@ -77,6 +92,22 @@
       var animeLink = doc.querySelector('.episodes-nav a[href^="/anime/"]');
       result.animePath = animeLink ? absolute(animeLink.getAttribute('href'), 'page') : path.replace(/^\/ver\//, '/anime/').replace(/-\d+$/, '');
       result.animeTitle = result.title.replace(/\s+\d+(?:\.\d+)?$/, '');
+      result.nextEpisode = '';
+      result.previousEpisode = '';
+      Array.prototype.some.call(doc.querySelectorAll('.episodes-nav a[href]'), function (link) {
+        if (!/anterior/i.test(link.textContent)) return false;
+        var target = absolute(link.getAttribute('href'), 'page');
+        var prefix = result.animePath.replace(/^\/anime\//, '/ver/') + '-';
+        if (target && target.indexOf(prefix) === 0 && target !== path) { result.previousEpisode = target; return true; }
+        return false;
+      });
+      Array.prototype.some.call(doc.querySelectorAll('.episodes-nav a[href]'), function (link) {
+        if (!/siguiente/i.test(link.textContent)) return false;
+        var target = absolute(link.getAttribute('href'), 'page');
+        var prefix = result.animePath.replace(/^\/anime\//, '/ver/') + '-';
+        if (target && target.indexOf(prefix) === 0 && target !== path) { result.nextEpisode = target; return true; }
+        return false;
+      });
       data(html, 'videos').forEach(function (video) {
         if (!Array.isArray(video) || typeof video[0] !== 'string') return;
         var url = absolute(video[1], 'video');

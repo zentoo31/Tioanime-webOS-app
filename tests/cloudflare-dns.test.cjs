@@ -19,6 +19,18 @@ function transport(replies, calls) {
   };
 }
 const answer = { Status: 0, Answer: [{ type: 1, TTL: 60, data: '104.21.1.2' }] };
+test('each allowed source has independent DNS queries, caching and concurrent callbacks', async () => {
+  const calls = [];
+  const other = { Status: 0, Answer: [{ type: 1, TTL: 60, data: '104.21.1.3' }] };
+  const resolver = create(transport([answer, other], calls));
+  const lookup = host => new Promise((ok, fail) => resolver.resolve(host, (e, ip) => e ? fail(e) : ok(ip)));
+  assert.deepEqual(await Promise.all([lookup('jkanime.net'), lookup('cdn1.ducvomes.com'), lookup('jkanime.net')]), ['104.21.1.2', '104.21.1.3', '104.21.1.2']);
+  assert.equal(await lookup('cdn1.ducvomes.com'), '104.21.1.3');
+  assert.equal(calls.length, 2);
+  assert.match(calls[0].path, /name=jkanime.net/);
+  assert.match(calls[1].path, /name=cdn1.ducvomes.com/);
+  await assert.rejects(lookup('jkanime.net.evil.test'), /no permitido/);
+});
 test('Cloudflare bootstraps with a fixed IP, keeps TLS identity and caches by TTL', async () => {
   const calls = []; let time = 0;
   const resolver = create(transport([answer, answer], calls), () => time);

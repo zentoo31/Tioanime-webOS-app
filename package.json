@@ -1,21 +1,23 @@
-﻿{
+{
   "name": "tioanime-webos",
-  "version": "0.2.3",
+  "version": "0.5.1-luna.2",
   "private": true,
   "author": "zentoo31",
   "description": "Base de aplicación para LG webOS TV",
   "scripts": {
-    "check": "node --check app/main.js && node --check app/catalog.js && node --check app/history.js && node --check service/service.js && ares-package --check app service",
+    "check": "node --check app/main.js && node --check app/catalog.js && node --check app/jkanime.js && node --check app/history.js && node --check service/service.js && node --check service/jkanime.js && node --check service/resources.js && node --check service/network.js && node --check app/hianime.js && node --check app/subtitles.js && node --check service/hianime.js && ares-package --check app service",
     "test": "node --test tests/*.test.cjs",
     "test:live": "node scripts/check-live.cjs",
     "test:dns": "node scripts/check-dns.cjs",
-    "package": "ares-package app service --outdir dist",
-    "serve": "node scripts/serve.cjs"
+    "package": "ares-package app service --outdir dist && node scripts/name-release.cjs",
+    "serve": "node scripts/serve.cjs",
+    "test:jkanime": "node scripts/check-jkanime-live.cjs",
+    "test:voe": "node scripts/check-voe-live.cjs",
+    "test:hianime": "node scripts/check-hianime-live.cjs"
   },
   "devDependencies": {
+    "hls.js": "^1.7.3",
     "linkedom": "^0.18.13"
-  }
+  },
+  "releaseName": "Luna 2 - Experimental"
 }
-
-
-

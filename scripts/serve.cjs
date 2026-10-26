@@ -2,10 +2,29 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const client = require('../service/client');
+const provider = require('../service/provider');
 const root = path.resolve(__dirname, '../app');
 const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json' };
 http.createServer((req, res) => {
   const url = new URL(req.url, 'http://localhost');
+  if (url.pathname === '/api/images' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; if (body.length > 20000) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const urls = JSON.parse(body).urls;
+        if (!Array.isArray(urls) || urls.length > 80) throw new Error('Lista no válida');
+        require('../service/jkanime').assets(urls, (error, assets) => { res.writeHead(error ? 502 : 200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ returnValue: !error, assets })); });
+      } catch { res.writeHead(400).end(); }
+    }); return;
+  }
+  if (url.pathname === '/api/provider') {
+    provider.probe(url.searchParams.get('url'), (error, result) => {
+      res.writeHead(error ? 502 : 200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+      res.end(JSON.stringify(error ? { returnValue: false, errorText: error.message } : { returnValue: true, result }));
+    });
+    return;
+  }
   if (url.pathname === '/api/page') {
     client.load(url.searchParams.get('path'), (error, html) => {
       res.writeHead(error ? 502 : 200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });

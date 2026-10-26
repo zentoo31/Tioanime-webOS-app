@@ -134,3 +134,116 @@ header, #search, .heading { -webkit-animation: app-open 220ms ease-out; animatio
  button:focus, button.card:focus, button:active { -webkit-transform: none; transform: none; }
  header, #search, .heading, #grid.content-ready > .card:nth-child(-n+8), #grid.content-ready > .recent-entry:nth-child(-n+8), body.loading #status::before { -webkit-animation: none; animation: none; }
 }
+
+#player-mode { margin-left: auto; flex-shrink: 0; font-size: 18px; }
+.player-information { flex: 1; padding-right: 20px; }
+#compatibility-confirm { position: absolute; top: 100px; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; align-items: center; padding: 40px; background: #18142f; z-index: 3; }
+#compatibility-confirm > div { max-width: 850px; padding: 36px; border: 1px solid #75628e; background: #251e3c; }
+#compatibility-confirm h2 { font-size: 32px; margin-top: 0; }
+#compatibility-confirm p { font-size: 23px; line-height: 1.6; }
+#accept-compatibility { background: #593049; }
+#player-notice { position: absolute; top: 100px; left: 0; right: 0; bottom: 0; padding: 80px; background: #18142f; z-index: 2; text-align: center; }
+#player-notice-text { font-size: 28px; line-height: 1.6; max-width: 850px; margin: 40px auto; }
+
+#native-video { position: absolute; top: 100px; left: 0; width: 100%; height: calc(100% - 180px); background: #000; }
+#native-controls { position: absolute; left: 0; right: 0; bottom: 0; height: 80px; display: flex; align-items: center; justify-content: center; background: #211a38; border-top: 1px solid #443655; }
+#native-controls button { font-size: 20px; padding: 12px 20px; }
+#video-time { margin-left: 24px; font-size: 21px; color: #cec3e6; }
+
+#player.video-expanded .player-toolbar { display: none; }
+#player.video-expanded #native-video { top: 0; height: calc(100% - 80px); }
+#video-fullscreen { white-space: nowrap; }
+#native-controls button { font-size: 18px; padding: 12px 16px; }
+#query[readonly] { cursor: pointer; }
+
+#episode-actions { margin: 0 0 26px; }
+#episode-actions button { margin: 0 14px 0 0; }
+.recent-entry { flex-direction: column; }
+.recent-entry .card-title { padding-right: 18px; }
+.recent-actions { display: flex; align-items: center; justify-content: space-between; padding: 8px; background: #211a38; border: 1px solid #443655; border-top: 0; }
+.recent-catalog { flex: 1; margin: 0 10px 0 0; font-size: 18px; padding: 10px; text-align: left; background: transparent; }
+.recent-actions .remove-recent { position: static; flex-shrink: 0; }
+.player-toolbar > button { font-size: 17px; padding: 12px; flex-shrink: 0; }
+.player-toolbar > button .icon { width: 20px; height: 20px; margin-right: 7px; }
+#native-controls button { font-size: 17px; padding: 12px; }
+#video-captions { position: absolute; left: 8%; right: 8%; bottom: 190px; z-index: 3; text-align: center; white-space: pre-line; font-size: 32px; line-height: 1.3; font-weight: 600; color: #fff; text-shadow: -2px -2px 2px #000, 2px 2px 2px #000, 0 0 8px #000; pointer-events: none; }
+#video-subtitles { max-width: 310px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#native-controls button .icon { width: 20px; height: 20px; margin-right: 7px; }
+@media (max-width: 1100px) {
+ #native-controls { height: 128px; flex-wrap: wrap; padding: 8px; }
+ #native-video { height: calc(100% - 228px); }
+ #player.video-expanded #native-video { height: calc(100% - 128px); }
+ .player-toolbar .icon { display: none; }
+}
+
+#embed-controls { position: absolute; left: 0; right: 0; bottom: 0; height: 80px; display: flex; align-items: center; justify-content: center; background: #211a38; border-top: 1px solid #443655; }
+#frame { height: calc(100% - 180px); }
+#native-controls { flex-wrap: wrap; height: 128px; padding: 8px; }
+#native-video { height: calc(100% - 228px); }
+#player.video-expanded #native-video { height: calc(100% - 128px); }
+#video-opening { border-color: #a283ca; background: #46365f; }
+
+#chronology { margin: 36px 0; }
+#chronology h2 { margin: 0 0 10px; font-size: 27px; }
+#chronology .view-description { margin: 0 0 24px; }
+#chronology-grid { display: flex; flex-wrap: wrap; margin: -12px; align-items: stretch; }
+#chronology-grid button.card { width: calc(16.666% - 24px); }
+@media (max-width: 1400px) { #chronology-grid button.card { width: calc(20% - 24px); } }
+@media (max-width: 900px) { #chronology-grid button.card { width: calc(33.333% - 24px); } }
+
+#source-switch { margin: -12px 0 30px; padding: 16px 20px; border-left: 3px solid #c5a3ff; background: #211a38; }
+#source-switch > span { color: #bfb1d4; font-size: 19px; margin-right: 20px; }
+#source-switch button[aria-pressed="true"] { background: #624394; border-color: #c5a3ff; }
+.source-label { display: block; margin-top: 8px; color: #bfb1d4; font-size: 16px; }
+
+/* Luna 1: lectura a distancia, zonas seguras y controles sobre el video. */
+body { padding: 40px 64px; }
+button, input { font-size: 26px; min-height: 60px; }
+header nav button { font-size: 24px; padding: 16px; }
+.eyebrow, .metadata-field dt, .genre, .source-label, footer { font-size: 20px; }
+.card-title, .view-description, #status, .anime-information > p:not(.eyebrow) { font-size: 24px; }
+.episode-label, .recent-episode, .server-description, .recent-catalog, #clear-history, .recent-progress-label { font-size: 22px; }
+button:focus, input:focus { outline: 4px solid #e0caff; outline-offset: 4px; }
+#release-badge { margin: -16px 0 24px; font-size: 18px; letter-spacing: 2px; color: #c5a3ff; }
+.favorite-action { margin: 24px 16px 0 0; }
+.favorite-action[aria-pressed="true"] { border-color: #c5a3ff; background: #46365f; }
+.recent-progress, .video-progress { display: block; height: 6px; margin-top: 14px; background: #514364; overflow: hidden; }
+.recent-progress > span, #video-progress-fill { display: block; height: 100%; background: #dac1ff; width: 0; }
+.recent-progress-label { display: block; margin-top: 12px; color: #ddd3ee; }
+#player .player-toolbar { padding-left: 40px; padding-right: 40px; }
+#player.native-player .player-toolbar { display: none; }
+#player.native-player #native-video, #player.native-player.video-expanded #native-video { top: 0; left: 0; width: 100%; height: 100%; }
+#native-controls { left: 32px; right: 32px; bottom: 28px; height: auto; min-height: 88px; padding: 12px 16px; background: rgba(24,20,47,.96); border: 1px solid #75628e; justify-content: center; }
+#native-controls button { font-size: 24px; padding: 12px 16px; }
+#video-seek { min-width: 260px; flex: 1; max-width: 600px; text-align: center; }
+#video-time { font-size: 22px; margin: 0; }
+.seek-hint { display: block; font-size: 18px; margin-top: 6px; color: #c7bbde; }
+#video-more-panel button .icon, #resume-confirm button .icon { width: 24px; height: 24px; margin-right: 10px; }
+#video-subtitles { max-width: 290px; }
+#video-more-panel, #resume-confirm { position: absolute; z-index: 5; left: 10%; right: 10%; bottom: 150px; padding: 28px; background: #211a38; border: 2px solid #c5a3ff; }
+#video-more-panel { display: flex; flex-wrap: wrap; justify-content: center; }
+#resume-confirm { top: 25%; bottom: auto; max-width: 900px; margin: 0 auto; }
+#resume-confirm h2 { font-size: 36px; margin: 0 0 18px; }
+#resume-description { font-size: 28px; line-height: 1.5; }
+#video-captions { bottom: 165px; font-size: 36px; }
+#player.controls-hidden #native-controls { opacity: 0; visibility: hidden; pointer-events: none; }
+#player.controls-hidden #video-captions { bottom: 6%; }
+#embed-controls { padding: 20px 40px; min-height: 100px; height: auto; }
+#frame { height: calc(100% - 220px); }
+@media (max-width: 1400px) {
+ body { padding: 32px 40px; }
+ a.brand img { width: 190px; }
+ header nav button { font-size: 22px; padding: 12px; }
+ #native-controls button { font-size: 22px; }
+ #search label { max-width: 33%; }
+ #video-captions { font-size: 32px; }
+}
+@media (max-width: 900px) {
+ body { padding: 28px; }
+ header nav { flex-wrap: wrap; }
+ #native-controls { left: 24px; right: 24px; bottom: 24px; }
+ #native-controls button { font-size: 20px; padding: 8px; }
+ #video-seek { min-width: 200px; }
+ #source-switch { flex-wrap: wrap; }
+ #search label { max-width: none; }
+}

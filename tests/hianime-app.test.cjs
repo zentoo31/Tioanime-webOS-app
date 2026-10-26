@@ -1,0 +1,56 @@
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const vm = require('node:vm'), fs = require('node:fs');
+const { parseHTML, DOMParser } = require('linkedom');
+const { TioCatalog } = require('../app/catalog'), { JKCatalog } = require('../app/jkanime');
+const { HiCatalog } = require('../app/hianime'), { TioHistory } = require('../app/history');
+test('HiAnime search, native playback, caption switching, seeking and cleanup work together', () => {
+  const { window, document } = parseHTML(fs.readFileSync('app/index.html', 'utf8'));
+  const $ = id => document.getElementById(id);
+  let focused, saved = '';
+  window.HTMLElement.prototype.focus = function () { focused = this; };
+  window.HTMLElement.prototype.blur = function () {};
+  Object.defineProperty(document, 'activeElement', { get: () => focused || document.body });
+  window.localStorage = { getItem: () => saved, setItem: (k, value) => { saved = value; } };
+  const video = $('native-video'); video.pause = () => {}; video.load = () => {}; video.play = () => Promise.resolve();
+  const pending = [], captions = [];
+  const webOS = { service: { request: (uri, options) => {
+    if (options.method === 'holdPlayback') return { cancel() {} };
+    if (options.method === 'images') { options.onSuccess({ assets: {} }); return; }
+    pending.push(options);
+  } }, platformBack() {} };
+  class XHR { open(method, url) { this.url = url; } send() { captions.push(this); } abort() { this.aborted = true; } }
+  window.webOS = webOS; window.PalmSystem = {};
+  const context = vm.createContext({ window, document, webOS, DOMParser, TioCatalog, JKCatalog, HiCatalog, TioHistory, URL, atob, XMLHttpRequest: XHR, setTimeout, clearTimeout, Error });
+  vm.runInContext(fs.readFileSync('app/subtitles.js', 'utf8'), context);
+  context.TioSubtitles = window.TioSubtitles;
+  vm.runInContext(fs.readFileSync('app/main.js', 'utf8'), context);
+  const answer = html => pending.shift().onSuccess({ html });
+  answer('<h1>Inicio</h1>');
+  assert.equal($('source-hi').parentNode.id, 'source-switch');
+  $('query').value = 'Titan'; $('search').dispatchEvent(new window.Event('submit', { cancelable: true })); answer('<h1>Results</h1>');
+  $('source-hi').click(); assert.equal(pending[0].parameters.path, '/hi/search?q=Titan');
+  answer({ html: '<div class="flw-item"><h3 class="film-name"><a href="https://hianime.at/attack-on-titan-240">Attack on Titan</a></h3></div>' });
+  assert.equal($('source-hi').getAttribute('aria-pressed'), 'true'); assert($('item-0').classList.contains('poster'));
+  $('item-0').click();
+  const data = { html: '<h2 class="film-name">Attack on Titan</h2>', episodes: '<a class="ep-item" data-id="4402" data-number="1"></a><a class="ep-item" data-id="4403" data-number="2"></a>' };
+  answer(data); $('item-0').click();
+  answer({ ...data, servers: '<div class="server-item" data-type="sub" data-hash="' + Buffer.from('https://zokoanime.video/stream/mal/16498/1/sub').toString('base64') + '">ZokoAnime</div>' });
+  $('item-0').click(); assert.equal(pending[0].method, 'probeProvider');
+  const local = 'http://127.0.0.1:12345/resource/' + 'a'.repeat(48) + '/';
+  pending.shift().onSuccess({ result: { streamUrl: local + '0', mediaType: 'application/vnd.apple.mpegurl', subtitles: [{ label: 'English', url: local + '1' }, { label: 'Spanish', url: local + '2' }] } });
+  assert.equal(video.hidden, false); assert.equal($('video-subtitles').textContent, 'Subs: Spanish');
+  assert.equal(captions[0].url, local + '2');
+  const request = captions.shift(); request.status = 200; request.responseText = 'WEBVTT\n\n00:01.000 --> 00:03.000\nHola'; request.onload();
+  video.currentTime = 2; video.dispatchEvent(new window.Event('timeupdate'));
+  assert.equal($('video-captions').textContent, 'Hola'); assert.equal($('video-captions').hidden, false);
+  video.currentTime = 4; video.dispatchEvent(new window.Event('seeked')); assert.equal($('video-captions').hidden, true);
+  $('video-subtitles').click(); assert.equal($('video-subtitles').textContent, 'Subs: desactivados');
+  $('video-subtitles').click(); assert.equal(captions[0].url, local + '1');
+  const late = captions.shift(); $('close-player').click(); assert(late.aborted);
+  late.status = 200; late.responseText = request.responseText; late.onload();
+  assert.equal($('video-subtitles').hidden, true); assert.equal($('video-captions').hidden, true);
+  $('recent').click(); assert.match($('item-0').textContent, /HiAnime/);
+  $('recent-catalog-0').click(); answer(data); assert.match($('continue-anime').textContent, /Episodio 1/); assert.doesNotMatch($('continue-anime').textContent, /4402/);
+  $('home').click(); answer('<h1>Inicio</h1>'); assert.equal($('source-switch').hidden, true);
+});

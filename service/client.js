@@ -6,6 +6,8 @@ function validPath(path) {
     /^(\/|\/directorio(?:\?(?:q=[^&#]*|p=\d+)(?:&(?:q=[^&#]*|p=\d+))?)?|\/(?:anime|ver)\/[a-z0-9-]+)$/.test(path);
 }
 function load(path, callback) {
+  if (typeof path === 'string' && path.indexOf('/hi/') === 0) { require('./hianime').load(path, callback); return; }
+  if (typeof path === 'string' && path.indexOf('/jk/') === 0) { require('./jkanime').load(path, callback); return; }
   if (!validPath(path)) { callback(new Error('Ruta no permitida')); return; }
   var finished = false, request;
   var deadline = setTimeout(function () { done(new Error('Tiempo de conexión agotado')); if (request) request.destroy(); }, 20000);
