@@ -47,10 +47,12 @@
   function prepareResume() {
     var saved = recent.list().filter(function (entry) { return entry.path === current; })[0];
     if (saved && isFinite(saved.position) && saved.position >= 10 && !saved.completed) {
+      if (silentResume) { pendingSeek = saved.position; silentResume = false; $('video-toggle').focus(); showControls(); return; }
       resumePending = saved; $('resume-confirm').hidden = false;
       $('resume-description').textContent = 'Retomar desde ' + clock(saved.position) + ' de ' + clock(saved.duration) + '.';
       $('resume-continue').focus();
     } else $('video-toggle').focus();
+    silentResume = false;
     showControls();
   }
   var activeResult = null, knownImages = {};
@@ -58,6 +60,15 @@
   var sandboxPolicy = 'allow-scripts allow-same-origin allow-forms allow-presentation';
   var expandedVideo = false, fullscreenBackGuard = 0, searchEditing = false, lastControl = null;
   var imageURLs = {}, networkLease = null, hlsEngine = null, hlsQueue = null;
+  var enginePreference = null, playbackEngine = 'native', activeHLS = false, silentResume = false;
+  function supportsMSE() {
+    try { return !!(window.MediaSource && typeof window.MediaSource.isTypeSupported === 'function' && window.MediaSource.isTypeSupported('video/mp4; codecs="avc1.42E01E"') && window.MediaSource.isTypeSupported('audio/mp4; codecs="mp4a.40.2"')); } catch (e) { return false; }
+  }
+  function compatibilityProvider() { return playerItem && /^https:\/\/(?:jkanime\.net\/jkplayer\/|zokoanime\.video\/stream\/)/.test(playerItem.url); }
+  function engineLabel() {
+    $('video-engine').hidden = !activeHLS;
+    buttonLabel($('video-engine'), supportsMSE() ? (playbackEngine === 'mse' ? 'Video: probar modo nativo' : 'Video negro: probar modo compatible') : 'Video negro: reiniciar video', 'refresh');
+  }
   function altPath(path) { return /^\/(?:jk|hi)\//.test(path); }
   function isSearch(path) { return path.indexOf('/directorio?q=') === 0 || /^\/(?:jk|hi)\/search\?/.test(path); }
   function proxiedImage(value) { return /^https:\/\/(?:cdn\.jkdesa\.com|hianime\.at|cdn\.anipixcdn\.co|cdn\.myanimelist\.net)\//.test(value || ''); }
@@ -420,6 +431,7 @@
     saveProgress(); clearTimeout(controlsTimer); controlsHidden = false; $('player').classList.remove('controls-hidden');
     resumePending = null; pendingSeek = null; $('resume-confirm').hidden = true; $('video-more-panel').hidden = true;
     $('video-more').setAttribute('aria-expanded', 'false'); $('player').classList.remove('native-player');
+    activeHLS = false; $('video-engine').hidden = true;
     if (window.TioSubtitles) TioSubtitles.clear();
     if (isVideoFullscreen()) leaveFullscreen();
     playerNative = false;
@@ -444,16 +456,35 @@
   }
   function startNative(source, hls, token) {
     var video = $('native-video');
-    if (!hls || isTV || (typeof video.canPlayType === 'function' && video.canPlayType('application/vnd.apple.mpegurl'))) {
-      video.setAttribute('src', source); nativePlay(); return;
+    activeHLS = !!hls;
+    var preferMSE = hls && supportsMSE() && (enginePreference === 'mse' || enginePreference !== 'native' && isTV && compatibilityProvider());
+    function nativeSource(message) {
+      if (token !== playerSerial || !playerNative) return;
+      if (hlsEngine) { hlsEngine.destroy(); hlsEngine = null; }
+      playbackEngine = 'native'; engineLabel(); video.setAttribute('src', source); nativePlay();
+      if (message) $('player-status').textContent = message;
+    }
+    if (!hls || !preferMSE && (enginePreference === 'native' || isTV || (typeof video.canPlayType === 'function' && video.canPlayType('application/vnd.apple.mpegurl')))) {
+      nativeSource(); return;
     }
     function ready(error) {
       if (token !== playerSerial || !playerNative) return;
-      if (error || !window.Hls || !window.Hls.isSupported()) { $('player-status').textContent = 'Este navegador no admite HLS. Prueba el reproductor web.'; return; }
-      hlsEngine = new window.Hls({ maxBufferLength: 20, maxMaxBufferLength: 40 });
-      hlsEngine.loadSource(source); hlsEngine.attachMedia(video);
+      if (error || !window.Hls || !window.Hls.isSupported()) {
+        if (isTV || video.canPlayType && video.canPlayType('application/vnd.apple.mpegurl')) nativeSource('Modo compatible no disponible; se usa el reproductor nativo.');
+        else $('player-status').textContent = 'Este navegador no admite HLS. Prueba el reproductor web.';
+        return;
+      }
+      playbackEngine = 'mse'; engineLabel();
+      // Remultiplexa TS a MP4 en memoria. No cambia el códec ni recodifica video.
+      hlsEngine = new window.Hls({ maxBufferLength: 20, maxMaxBufferLength: 40, enableWorker: false, capLevelToPlayerSize: true });
       hlsEngine.on(window.Hls.Events.MANIFEST_PARSED, function () { if (token === playerSerial) nativePlay(); });
-      hlsEngine.on(window.Hls.Events.ERROR, function (event, data) { if (token === playerSerial && data.fatal) $('player-status').textContent = 'No se pudo cargar el video HLS. Prueba otro servidor.'; });
+      hlsEngine.on(window.Hls.Events.ERROR, function (event, data) {
+        if (token !== playerSerial || !data.fatal) return;
+        saveProgress(); showControls(); $('video-more-panel').hidden = false;
+        $('player-status').textContent = 'El modo compatible no pudo reproducir este video. Prueba el modo nativo o cambia de servidor.';
+        $('video-more').setAttribute('aria-expanded', 'true'); $('video-engine').focus();
+      });
+      hlsEngine.loadSource(source); hlsEngine.attachMedia(video);
     }
     if (window.Hls) { ready(); return; }
     if (hlsQueue) { hlsQueue.push(ready); return; }
@@ -463,10 +494,12 @@
     script.onload = function () { finish(); }; script.onerror = function () { finish(new Error('No se pudo cargar el reproductor HLS')); };
     document.head.appendChild(script);
   }
-  function play(item, compatible, forceWeb) {
+  function play(item, compatible, forceWeb, switchEngine) {
     var token = ++playerSerial;
     clearTimeout(playerTimer);
     stopNative();
+    if (!switchEngine) enginePreference = null;
+    silentResume = !!switchEngine;
     if ($('player').hidden) lastFocus = document.activeElement.id;
     playerItem = item; playerCompatible = compatible === true;
     $('compatibility-confirm').hidden = true;
@@ -601,6 +634,11 @@
   $('video-more-close').onclick = closeMore;
   $('video-server').onclick = closePlayer;
   $('video-web').onclick = function () { if (playerItem) play(playerItem, false, true); };
+  $('video-engine').onclick = function () {
+    if (!playerItem || !activeHLS) return;
+    enginePreference = playbackEngine === 'native' && supportsMSE() ? 'mse' : 'native';
+    play(playerItem, false, false, true);
+  };
   $('resume-continue').onclick = function () { resumeChoice(false); };
   $('resume-start').onclick = function () { resumeChoice(true); };
   $('video-seek').onclick = function () { showControls(); };

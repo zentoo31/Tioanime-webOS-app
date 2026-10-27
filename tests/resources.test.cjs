@@ -6,6 +6,18 @@ const { PassThrough } = require('node:stream');
 const relay = require('../service/resources');
 const dns = require('../service/cloudflare-dns');
 
+test('legacy HLS removes optional unsupported hints without pretending advanced streams are v3', () => {
+  const master = '#EXTM3U\n#EXT-X-VERSION:4\n#EXT-X-INDEPENDENT-SEGMENTS\n#EXT-X-STREAM-INF:BANDWIDTH=1000,RESOLUTION=1280x720\n720/index.m3u8\n#EXT-X-I-FRAME-STREAM-INF:BANDWIDTH=10,URI="iframe.m3u8"';
+  const compatible = relay.legacyPlaylist(master);
+  assert.match(compatible, /#EXT-X-VERSION:3/); assert.match(compatible, /720\/index.m3u8/);
+  assert.doesNotMatch(compatible, /I-FRAME|INDEPENDENT/);
+  for (const feature of ['#EXT-X-BYTERANGE:100@0', '#EXT-X-MAP:URI="init.mp4"', '#EXT-X-KEY:METHOD=AES-128,URI="key.bin"', '#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio"', '#EXT-X-DISCONTINUITY']) {
+    const input = '#EXTM3U\n#EXT-X-VERSION:4\n' + feature + '\nsegment.ts';
+    const output = relay.legacyPlaylist(input);
+    assert.match(output, /VERSION:4/); assert(output.includes(feature));
+  }
+});
+
 test('HLS relay rewrites playlists and keys, forwards ranges and blocks unapproved destinations', async t => {
   const original = https.request, calls = [];
   let unsafe = false;

@@ -56,7 +56,7 @@ function probe(url, callback) {
     var source = response.text.match(/https:\/\/[a-z0-9-]+\.playmudos\.com\/[^\s<>"'\\#]+\.m3u8(?:\?[^\s<>"'\\#]*)?/i);
     var result = { provider: 'JKAnime', statusCode: response.status, unavailable: response.status === 404 || response.status === 410, mediaType: 'application/vnd.apple.mpegurl' };
     if (response.status !== 200 || !source) { callback(null, result); return; }
-    resources.issue(source[0].replace(/&amp;/g, '&'), url, function (e, local) { if (e) callback(e); else { result.streamUrl = local; callback(null, result); } });
+    resources.issue(source[0].replace(/&amp;/g, '&'), url, function (e, local) { if (e) callback(e); else { result.streamUrl = local; callback(null, result); } }, { legacyHLS: true });
   });
 }
 exports.load = load; exports.validPath = validPath; exports.assets = assets; exports.playerURL = playerURL; exports.probe = probe;

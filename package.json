@@ -1,6 +1,6 @@
 {
   "name": "tioanime-webos",
-  "version": "0.5.1-luna.2",
+  "version": "0.5.2-luna.3",
   "private": true,
   "author": "zentoo31",
   "description": "Base de aplicación para LG webOS TV",
@@ -19,5 +19,5 @@
     "hls.js": "^1.7.3",
     "linkedom": "^0.18.13"
   },
-  "releaseName": "Luna 2 - Experimental"
+  "releaseName": "Luna 3 - Experimental"
 }

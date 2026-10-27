@@ -2,7 +2,7 @@
 
 Autor: **zentoo31**.
 
-Aplicación independiente, sin afiliación a TioAnime. Release **Luna 2 - Experimental** (0.5.1-luna.2; paquete webOS 0.5.1).
+Aplicación independiente, sin afiliación a TioAnime. Release **Luna 3 - Experimental** (0.5.2-luna.3; paquete webOS 0.5.2).
 
 ## Funciones
 
@@ -50,7 +50,7 @@ Activa Developer Mode y conecta ambos equipos a la misma red. Configura el dispo
 ```powershell
 ares-setup-device
 ares-novacom --device NOMBRE_TV --getkey
-ares-install --device NOMBRE_TV dist/com.tioanime.tv_Luna-2_0.5.1_all.ipk
+ares-install --device NOMBRE_TV dist/com.tioanime.tv_Luna-3_0.5.2_all.ipk
 ares-launch --device NOMBRE_TV com.tioanime.tv
 ```
 
@@ -204,3 +204,8 @@ Ver [cambios, limitaciones y prueba en TV](docs/luna-1.md).
 ## Luna 2 - Experimental
 
 Ver [iconos, servidores y salida de la barra de tiempo](docs/luna-2.md).
+
+
+## Luna 3 - Experimental
+
+Ver [compatibilidad de video en TV y prueba con Steins;Gate 0](docs/luna-3.md).

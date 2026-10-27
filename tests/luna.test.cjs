@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm'), fs = require('node:fs');
 const { parseHTML, DOMParser } = require('linkedom');
 const { TioCatalog } = require('../app/catalog'), { TioHistory } = require('../app/history');
-function setup() {
+function setup(options = {}) {
   const { window, document } = parseHTML(fs.readFileSync('app/index.html', 'utf8'));
   const $ = id => document.getElementById(id), values = {}, pending = [], timers = new Map();
   let focused, timerId = 0, plays = 0, restoredScroll = -1;
@@ -32,12 +32,25 @@ function setup() {
     pending.push(options);
   } }, platformBack() {} };
   window.PalmSystem = {}; window.webOS = webOS;
+  const engines = [];
+  if (options.mse) {
+    window.MediaSource = { isTypeSupported: () => true };
+    window.Hls = class {
+      static Events = { MANIFEST_PARSED: 'manifest', ERROR: 'error' };
+      static isSupported() { return true; }
+      constructor(config) { this.config = config; this.handlers = {}; engines.push(this); }
+      on(name, callback) { this.handlers[name] = callback; }
+      loadSource(source) { this.source = source; }
+      attachMedia(video) { this.video = video; }
+      destroy() { this.destroyed = true; }
+    };
+  }
   vm.runInNewContext(fs.readFileSync('app/main.js', 'utf8'), {
     window, document, webOS, DOMParser, TioCatalog, TioHistory, URL, Error,
     setTimeout: (callback, ms) => { const id = ++timerId; timers.set(id, { callback, ms }); return id; }, clearTimeout: id => timers.delete(id)
   });
   const key = code => { const event = new window.Event('keydown', { cancelable: true }); event.keyCode = code; document.dispatchEvent(event); };
-  return { window, document, $, video, pending, values, key, timers, plays: () => plays, scroll: () => restoredScroll, answer: html => pending.shift().onSuccess({ html }), focus: () => focused };
+  return { window, document, $, video, pending, values, key, timers, engines, plays: () => plays, scroll: () => restoredScroll, answer: html => pending.shift().onSuccess({ html }), focus: () => focused };
 }
 const home = Array.from({ length: 6 }, (_, i) => '<article class="episode"><a href="/ver/demo-' + (i + 1) + '"><h3>Demo ' + (i + 1) + '</h3></a></article>').join('');
 const episode = '<h1 class="anime-title">Demo 1</h1><div class="episodes-nav"><a href="/anime/demo">Listado</a><a href="/ver/demo-2">Episodio siguiente</a></div><script>var videos = [["YourUpload","https://www.yourupload.com/embed/abc123"]];</script>';
@@ -104,4 +117,28 @@ test('TioAnime server cards distinguish native adapters from external web player
   t.answer('<h1 class="anime-title">Demo 1</h1><script>var videos = [["VOE","https://voe.sx/e/example"],["Mega","https://mega.nz/embed/example"],["YourUpload","https://www.yourupload.com/embed/abc123"],["Okru","https://ok.ru/videoembed/123"]];</script>');
   assert.match(t.$('item-0').textContent, /App/); assert.match(t.$('item-1').textContent, /Web externo/);
   assert.match(t.$('item-2').textContent, /App/); assert.match(t.$('item-3').textContent, /App/);
+});
+
+test('affected HLS uses compatible remuxing when available and engine switches preserve progress', () => {
+  const t = setup({ mse: true }), { $, video, window } = t;
+  t.answer(home); $('item-0').click();
+  t.answer(episode.replace('https://www.yourupload.com/embed/abc123', 'https://jkanime.net/jkplayer/um?e=fixture'));
+  $('item-0').click();
+  const hls = { result: { ...result.result, mediaType: 'application/vnd.apple.mpegurl' } };
+  t.pending.shift().onSuccess(hls);
+  assert.equal(t.engines.length, 1); assert.equal(t.engines[0].config.enableWorker, false);
+  assert.match($('video-engine').textContent, /modo nativo/);
+  video.duration = 1200; video.currentTime = 123; video.pause();
+  $('video-more').click(); $('video-engine').click();
+  assert(t.engines[0].destroyed);
+  video.duration = NaN; video.currentTime = 0; t.pending.shift().onSuccess(hls);
+  assert.equal($('resume-confirm').hidden, true); assert.match(video.getAttribute('src'), /127\.0\.0\.1/);
+  video.duration = 1200; video.dispatchEvent(new window.Event('loadedmetadata')); assert.equal(video.currentTime, 123);
+  assert.match($('video-engine').textContent, /modo compatible/);
+  $('video-engine').click(); t.pending.shift().onSuccess(hls);
+  assert.equal(t.engines.length, 2);
+  t.engines[1].handlers.error(null, { fatal: true });
+  assert.equal($('video-more-panel').hidden, false); assert.equal(t.focus().id, 'video-engine');
+  assert.match($('player-status').textContent, /modo nativo/);
+  $('close-player').click(); assert(t.engines[1].destroyed);
 });

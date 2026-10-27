@@ -58,7 +58,7 @@ function probe(url, callback) {
         if (!err) result.subtitles[index] = { label: track.label.slice(0, 80), url: trackURL, default: !!track.default };
         if (--pending === 0) { result.subtitles = result.subtitles.filter(Boolean); callback(null, result); }
       }); });
-    });
+    }, { legacyHLS: true });
   });
 }
 exports.validPath = validPath; exports.imageURL = imageURL; exports.assets = assets; exports.load = load; exports.playerURL = playerURL; exports.source = source; exports.probe = probe;

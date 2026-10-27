@@ -19,6 +19,16 @@ function playlist(text, base, register) {
     return line.replace(/URI="([^"]+)"/g, function (all, value) { return 'URI="' + register(resolveURL(base, value)) + '"'; });
   }).join('\n');
 }
+function legacyPlaylist(text) {
+  // Solo retira indicaciones opcionales. Nunca elimina discontinuidades, claves,
+  // rangos, mapas ni pistas alternativas que cambian el significado del flujo.
+  var lines = text.split(/\r?\n/).filter(function (line) { return !/^#EXT-X-(?:I-FRAME-STREAM-INF|ALLOW-CACHE|PROGRAM-DATE-TIME|SESSION-DATA|INDEPENDENT-SEGMENTS)(?::|$)/.test(line); });
+  var simple = lines.every(function (line) {
+    return line.charAt(0) !== '#' || !/^#EXT/.test(line) || /^#(?:EXTM3U|EXTINF:|EXT-X-(?:VERSION:|STREAM-INF:|TARGETDURATION:|MEDIA-SEQUENCE:|ENDLIST$|PLAYLIST-TYPE:))/.test(line);
+  });
+  if (simple) lines = lines.map(function (line) { return /^#EXT-X-VERSION:4$/.test(line) ? '#EXT-X-VERSION:3' : line; });
+  return lines.join('\n');
+}
 function serve(req, res) {
   var match = (req.url || '').match(/^\/resource\/([a-f0-9]{48})\/(\d+)$/);
   var entry = match && entries[match[1]], url = entry && entry.urls[Number(match[2])];
@@ -45,7 +55,8 @@ function serve(req, res) {
           response.on('data', function (data) { size += data.length; if (size > 1024 * 1024) { response.destroy(); fail(); return; } chunks.push(data); });
           response.on('end', function () {
             try {
-              var content = playlist(Buffer.concat(chunks).toString('utf8'), target, function (value) { return child(entry, value); });
+              var text = Buffer.concat(chunks).toString('utf8');
+              var content = playlist(entry.legacy ? legacyPlaylist(text) : text, target, function (value) { return child(entry, value); });
               res.writeHead(200, { 'Content-Type': 'application/vnd.apple.mpegurl', 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' }); res.end(content);
             } catch (e) { fail(e); }
           });
@@ -61,14 +72,14 @@ function serve(req, res) {
   }
   res.on('close', function () { if (upstream) upstream.destroy(); }); connect(url, 0);
 }
-function issue(url, referer, callback) {
+function issue(url, referer, callback, options) {
   if (!allowed(url)) { callback(new Error('Recurso no permitido')); return; }
   function ready(error) {
     if (error) { callback(error); return; }
     Object.keys(entries).forEach(function (key) { if (entries[key].expires < Date.now()) delete entries[key]; });
     var keys = Object.keys(entries); if (keys.length >= 256) delete entries[keys[0]];
     var token = crypto.randomBytes(24).toString('hex');
-    var entry = entries[token] = { token: token, urls: [], referer: referer, expires: Date.now() + 30 * 60 * 1000 };
+    var entry = entries[token] = { token: token, urls: [], referer: referer, legacy: !!(options && options.legacyHLS), expires: Date.now() + 30 * 60 * 1000 };
     callback(null, child(entry, url));
   }
   if (port) { ready(); return; }
@@ -78,4 +89,5 @@ function issue(url, referer, callback) {
   server.listen(0, '127.0.0.1', function () { port = server.address().port; var pending = queue; queue = []; pending.forEach(function (cb) { cb(); }); });
 }
 exports.issue = issue; exports.allowed = allowed; exports.playlist = playlist;
+exports.legacyPlaylist = legacyPlaylist;
 exports.close = function (callback) { entries = {}; var active = server; server = null; port = null; if (active) active.close(callback); else if (callback) callback(); };
